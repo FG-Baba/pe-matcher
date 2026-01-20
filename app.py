@@ -17,10 +17,10 @@ from output import format_json_output, format_markdown_report
 # Constants
 HISTORY_LIMIT = 5
 DATA_CONNECTORS = [
-    {"id": "crunchbase", "name": "Crunchbase", "status": "placeholder", "desc": "Company funding data"},
-    {"id": "cbinsights", "name": "CB Insights", "status": "placeholder", "desc": "Market intelligence"},
-    {"id": "pitchbook", "name": "PitchBook", "status": "placeholder", "desc": "PE/VC deal data"},
-    {"id": "bloomberg", "name": "Bloomberg", "status": "placeholder", "desc": "Financial data"},
+    {"id": "crunchbase", "name": "Crunchbase", "desc": "Company funding data", "url": "https://www.crunchbase.com/"},
+    {"id": "cbinsights", "name": "CB Insights", "desc": "Market intelligence", "url": "https://www.cbinsights.com/"},
+    {"id": "pitchbook", "name": "PitchBook", "desc": "PE/VC deal data", "url": "https://pitchbook.com/"},
+    {"id": "bloomberg", "name": "Bloomberg Terminal", "desc": "Financial data", "url": "https://www.bloomberg.com/professional/solution/bloomberg-terminal/"},
 ]
 
 # Page configuration
@@ -500,7 +500,7 @@ def main():
                 <div class="connector-desc">{connector['desc']}</div>
             </div>
             """, unsafe_allow_html=True)
-            st.button(f"Connect {connector['name']}", key=f"connect_{connector['id']}", disabled=True)
+            st.link_button(f"Connect {connector['name']}", connector['url'], use_container_width=True)
 
         st.markdown("---")
         st.markdown("### Recent Searches")
