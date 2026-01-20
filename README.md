@@ -2,7 +2,7 @@
 
 > AI-powered tool that analyzes SMB company websites and generates a shortlist of potential private equity fund buyers.
 
-**Live Demo**: [Coming soon - Streamlit Cloud link]
+**Live Demo**: [https://deshaw-claude-casestudy-pe-match-ai-tpm-fg.streamlit.app](https://deshaw-claude-casestudy-pe-match-ai-tpm-fg.streamlit.app)
 
 ---
 
@@ -115,7 +115,7 @@ pe-matcher/
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/pe-matcher.git
+git clone https://github.com/FG-Baba/pe-matcher.git
 cd pe-matcher
 
 # Create virtual environment
