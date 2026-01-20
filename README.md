@@ -1,4 +1,4 @@
-# PE Matcher
+# (fg-claude) PE Matcher
 
 > AI-powered tool that analyzes SMB company websites and generates a shortlist of potential private equity fund buyers.
 
