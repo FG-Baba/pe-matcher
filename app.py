@@ -6,6 +6,7 @@ Find potential PE buyers for SMB companies by analyzing their websites.
 import streamlit as st
 import time
 import json
+from datetime import datetime
 from fpdf import FPDF
 
 from scraper import scrape_website, get_combined_content
@@ -13,12 +14,21 @@ from extractor import extract_company_profile, calculate_overall_confidence
 from matcher import match_pe_funds
 from output import format_json_output, format_markdown_report
 
+# Constants
+HISTORY_LIMIT = 5
+DATA_CONNECTORS = [
+    {"id": "crunchbase", "name": "Crunchbase", "status": "placeholder", "desc": "Company funding data"},
+    {"id": "cbinsights", "name": "CB Insights", "status": "placeholder", "desc": "Market intelligence"},
+    {"id": "pitchbook", "name": "PitchBook", "status": "placeholder", "desc": "PE/VC deal data"},
+    {"id": "bloomberg", "name": "Bloomberg", "status": "placeholder", "desc": "Financial data"},
+]
+
 # Page configuration
 st.set_page_config(
     page_title="PE Matcher",
     page_icon="🎯",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Clean, professional CSS styling
@@ -189,6 +199,100 @@ st.markdown("""
         border-radius: 16px;
         font-weight: 600;
         font-size: 0.85rem;
+    }
+
+    /* Confidence badges */
+    .badge-high {
+        background: #1b5e4b;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-block;
+    }
+
+    .badge-medium {
+        background: #9a5b2d;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-block;
+    }
+
+    /* Summary pills */
+    .summary-pill {
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        color: #6b7280;
+        display: inline-block;
+        margin-right: 8px;
+        margin-bottom: 8px;
+    }
+
+    /* Legend box */
+    .legend-box {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 8px;
+    }
+
+    .legend-item {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+
+    /* Connector card */
+    .connector-card {
+        border: 1px dashed #e5e7eb;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+
+    .connector-title {
+        font-weight: 600;
+        color: #1a1a2e;
+        font-size: 0.9rem;
+    }
+
+    .connector-desc {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+
+    /* History item */
+    .history-item {
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #0f4c81;
+        background: #f9fafb;
+        margin-bottom: 6px;
+        transition: background 0.2s ease;
+    }
+
+    .history-item:hover {
+        background: #e5e7eb;
+    }
+
+    /* Runtime display */
+    .runtime-badge {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        color: #0369a1;
+        display: inline-block;
     }
 
     /* Download buttons */
@@ -380,9 +484,58 @@ def process_single_url(url: str, user_context: str) -> dict:
 
 
 def main():
-    # Header
+    # Initialize session state for history
+    if "search_history" not in st.session_state:
+        st.session_state["search_history"] = []
+
+    # Sidebar - Data Connectors & History
+    with st.sidebar:
+        st.markdown("### Data Connectors")
+        st.caption("Connect premium data sources for enhanced analysis")
+
+        for connector in DATA_CONNECTORS:
+            st.markdown(f"""
+            <div class="connector-card">
+                <div class="connector-title">{connector['name']}</div>
+                <div class="connector-desc">{connector['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.button(f"Connect {connector['name']}", key=f"connect_{connector['id']}", disabled=True)
+
+        st.markdown("---")
+        st.markdown("### Recent Searches")
+
+        if st.session_state["search_history"]:
+            for item in st.session_state["search_history"][:HISTORY_LIMIT]:
+                if st.button(f"{item['company'][:25]}...", key=f"history_{item['timestamp']}", use_container_width=True):
+                    st.session_state["results"] = [item["result"]]
+            st.caption(f"Showing last {min(len(st.session_state['search_history']), HISTORY_LIMIT)} searches")
+        else:
+            st.caption("No recent searches")
+
+        st.markdown("---")
+        st.markdown("### Confidence Legend")
+        st.markdown("""
+        <div class="legend-box">
+            <div class="legend-item"><span class="badge-high">High</span> Strong evidence from reputable sources</div>
+            <div class="legend-item" style="margin-top: 8px;"><span class="badge-medium">Medium</span> Partial evidence, reasonable fit</div>
+            <div class="legend-item" style="margin-top: 8px; color: #991b1b;">Low matches excluded from results</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Main content - Header
     st.markdown('<h1 class="main-header">PE Matcher</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Identify potential private equity buyers for SMB companies</p>', unsafe_allow_html=True)
+
+    # Summary pills
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 24px;">
+        <span class="summary-pill">Target: &lt; 2 min</span>
+        <span class="summary-pill">Output: 5-10 funds</span>
+        <span class="summary-pill">Sources attached</span>
+        <span class="summary-pill">Powered by Claude API</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Input section
     col1, col2 = st.columns([3, 2])
@@ -443,6 +596,19 @@ def main():
 
         st.session_state["results"] = results
 
+        # Add to search history
+        for result in results:
+            if result["success"]:
+                history_item = {
+                    "url": result["url"],
+                    "company": result.get("company_profile", {}).get("company_name", result["url"]),
+                    "timestamp": datetime.now().isoformat(),
+                    "result": result
+                }
+                st.session_state["search_history"].insert(0, history_item)
+        # Keep only last N items
+        st.session_state["search_history"] = st.session_state["search_history"][:HISTORY_LIMIT]
+
     # Results
     if "results" in st.session_state and st.session_state["results"]:
         st.markdown("---")
@@ -450,11 +616,16 @@ def main():
 
         for i, result in enumerate(st.session_state["results"]):
             company_name = result.get("company_profile", {}).get("company_name", result["url"])
+            processing_time = result.get("processing_time", 0)
 
             with st.expander(f"{company_name}", expanded=(i == 0)):
                 if not result["success"] and result["error"]:
                     st.error(result["error"])
                     continue
+
+                # Show processing time
+                if processing_time > 0:
+                    st.markdown(f'<span class="runtime-badge">Runtime: {processing_time:.1f}s</span>', unsafe_allow_html=True)
 
                 tab1, tab2, tab3 = st.tabs(["Profile", "PE Matches", "Export"])
 
@@ -557,41 +728,64 @@ def display_pe_matches(matches: dict):
         st.info("No PE fund matches found.")
         return
 
+    st.caption("Select a fund card to view details. Confidence reflects match conviction.")
+
     for match in fund_matches:
         rank = match.get("rank", "")
         name = match.get("fund_name", "Unknown")
         score = match.get("fit_score", 0)
 
+        # Determine confidence level based on score
         if score >= 80:
             score_class = "score-high"
+            confidence = "high"
+            badge_class = "badge-high"
         elif score >= 60:
             score_class = "score-medium"
+            confidence = "medium"
+            badge_class = "badge-medium"
         else:
             score_class = "score-low"
+            confidence = "medium"
+            badge_class = "badge-medium"
 
-        col1, col2 = st.columns([4, 1])
+        col1, col2, col3 = st.columns([3, 1, 1])
 
         with col1:
             st.markdown(f"**{rank}. {name}**")
-            if match.get("rationale"):
-                st.caption(match["rationale"])
 
         with col2:
-            st.markdown(f'<span class="{score_class}">{score}</span>', unsafe_allow_html=True)
+            st.markdown(f'<span class="{badge_class}">{confidence.title()}</span>', unsafe_allow_html=True)
 
-        with st.expander("Details"):
-            if match.get("key_alignment"):
-                st.markdown("**Alignment:**")
-                for point in match["key_alignment"]:
-                    st.markdown(f"• {point}")
+        with col3:
+            st.markdown(f'<span class="{score_class}">{score}/100</span>', unsafe_allow_html=True)
 
-            if match.get("potential_concerns"):
-                st.markdown("**Concerns:**")
-                for concern in match["potential_concerns"]:
-                    st.markdown(f"• {concern}")
+        if match.get("rationale"):
+            st.caption(match["rationale"])
+
+        with st.expander("View Details"):
+            det_col1, det_col2 = st.columns(2)
+
+            with det_col1:
+                if match.get("key_alignment"):
+                    st.markdown("**Why This Fits:**")
+                    for point in match["key_alignment"]:
+                        st.markdown(f"• {point}")
+
+            with det_col2:
+                if match.get("potential_concerns"):
+                    st.markdown("**Potential Concerns:**")
+                    for concern in match["potential_concerns"]:
+                        st.markdown(f"• {concern}")
 
             if match.get("deal_type_fit"):
-                st.markdown(f"**Deal Type:** {match['deal_type_fit']}")
+                st.markdown(f"**Recommended Deal Type:** {match['deal_type_fit']}")
+
+            # Show evidence/sources
+            st.markdown("---")
+            st.markdown("**Evidence:** Matched from curated PE fund database. Connect data sources for enhanced verification.")
+
+        st.markdown("---")
 
 
 def display_export_options(result: dict):

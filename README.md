@@ -25,6 +25,11 @@ PE Matcher solves a key challenge in PE deal sourcing: quickly identifying which
 - **Smart PE Matching**: Matches companies against 50+ PE funds based on sector, size, geography, and investment thesis
 - **Deal Context**: Optional field to customize recommendations (e.g., "prefers growth equity over buyout")
 - **Export Options**: PDF reports, Markdown, and JSON formats
+- **Confidence Badges**: Color-coded High/Medium confidence indicators for each PE match
+- **Data Connectors Panel**: Placeholder integrations for Crunchbase, CB Insights, PitchBook, Bloomberg
+- **Recent Searches**: Session history storing last 5 searches for quick access
+- **Processing Metrics**: Runtime display showing analysis duration
+- **Confidence Legend**: Clear explanation of what High/Medium/Low confidence means
 
 ---
 
